@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jadwal Pelajaran IX-A | SMPN 2 Greged</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --night: #1d0e09;
+    --bark: #4a2418;
+    --maple: #c23a22;
+    --amber: #ee9a32;
+    --gold: #f6c85f;
+    --moss: #8a9640;
+    --paper: #fbeed6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    min-height: 100vh;
+    font-family: 'Nunito', sans-serif;
+    color: var(--paper);
+    background: linear-gradient(180deg, #1a0b07 0%, #3a1a10 45%, #6b3015 100%);
+    background-attachment: fixed;
+    overflow-x: hidden;
+  }
+
+  /* ---------- Langit, matahari, sinar ---------- */
+  .sun {
+    position: fixed; left: 78vw; top: 6vh; width: 70vmin; height: 70vmin;
+    transform: translate(-50%, -50%); z-index: 0; pointer-events: none;
+    background: radial-gradient(circle, rgba(255,214,130,.75) 0%, rgba(238,154,50,.32) 32%, transparent 68%);
+  }
+  .rays {
+    position: fixed; left: 78vw; top: 6vh; width: 200vmax; height: 200vmax; z-index: 0; pointer-events: none;
+    background: repeating-conic-gradient(from 0deg, rgba(255,214,140,.11) 0 5deg, transparent 5deg 17deg);
+    -webkit-mask-image: radial-gradient(circle, #000 0, transparent 42%);
+            mask-image: radial-gradient(circle, #000 0, transparent 42%);
+  }
+
+  /* ---------- Bukit & pohon (parallax) ---------- */
+  .hills { position: fixed; left: 0; right: 0; bottom: 0; height: 44vh; z-index: 1; pointer-events: none; overflow: hidden; }
+  .hill { position: absolute; left: -6%; width: 112%; top: 0; bottom: 0; }
+
+  /* ---------- Canvas partikel ---------- */
+  #fx { position: fixed; inset: 0; z-index: 30; pointer-events: none; }
+
+  /* ---------- Layar pembuka ---------- */
+  #intro {
+    position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; text-align: center; padding: 24px;
+    background:
+      radial-gradient(circle at 50% 38%, rgba(238,154,50,.22), transparent 55%),
+      linear-gradient(170deg, #150805, #34170e 70%, #4d210f);
+  }
+  .intro-school { font-weight: 800; font-size: .95rem; letter-spacing: .12em; color: var(--gold); margin-bottom: 10px; }
+  .intro-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.2rem, 9vw, 3.6rem); line-height: 1.05; margin-bottom: 10px; }
+  #intro p { font-size: .95rem; opacity: .75; margin-bottom: 26px; max-width: 32ch; margin-inline: auto; }
+  #startBtn {
+    font: 800 1rem 'Nunito', sans-serif; color: var(--night); background: var(--gold);
+    border: 0; border-radius: 999px; padding: 15px 38px; cursor: pointer;
+    animation: pulse 2.2s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(246,200,95,.55); }
+    70% { box-shadow: 0 0 0 20px rgba(246,200,95,0); }
+    100% { box-shadow: 0 0 0 0 rgba(246,200,95,0); }
+  }
+  button:focus-visible { outline: 3px solid var(--paper); outline-offset: 3px; }
+
+  /* ---------- Header ---------- */
+  header { position: relative; z-index: 2; text-align: center; padding: 70px 20px 26px; }
+  .school {
+    font-family: 'Cormorant Garamond', serif; font-weight: 700;
+    font-size: clamp(2.3rem, 10vw, 5rem); line-height: 1.02; color: var(--gold);
+    letter-spacing: .03em; text-shadow: 0 0 34px rgba(238,154,50,.5), 0 4px 0 rgba(0,0,0,.25);
+  }
+  .school .ch { display: inline-block; will-change: transform, filter; }
+  .subtitle { margin-top: 12px; font-size: clamp(1.05rem, 3.6vw, 1.4rem); font-weight: 700; }
+  .today-line { margin-top: 6px; font-size: .95rem; opacity: .8; }
+  .line { width: 280px; max-width: 62%; height: 3px; margin: 18px auto 0; border-radius: 3px; background: linear-gradient(90deg, var(--maple), var(--amber), var(--moss)); }
+
+  /* ---------- Jadwal ---------- */
+  main {
+    position: relative; z-index: 2; display: grid; gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    max-width: 1100px; margin: 0 auto; padding: 26px 20px 48vh;
+  }
+  .day {
+    position: relative; overflow: hidden;
+    padding: 22px 22px 14px;
+    border-radius: 28px 6px 28px 6px;
+    border: 1px solid rgba(246,200,95,.28);
+    background: linear-gradient(160deg, rgba(251,238,214,.14), rgba(251,238,214,.04));
+    -webkit-backdrop-filter: blur(9px); backdrop-filter: blur(9px);
+    box-shadow: 0 18px 40px rgba(0,0,0,.28);
+    will-change: transform;
+  }
+  .day::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .4s;
+    background: radial-gradient(circle at var(--mx, 50%) var(--my, 0%), rgba(255,226,160,.28), transparent 55%);
+  }
+  .day:hover::before { opacity: 1; }
+  .day:nth-child(3n+1) { --c: var(--maple); }
+  .day:nth-child(3n+2) { --c: var(--amber); }
+  .day:nth-child(3n)   { --c: var(--moss); }
+  .day h2 {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Cormorant Garamond', serif; font-size: 1.85rem; color: var(--amber);
+    padding-bottom: 10px; margin-bottom: 6px; border-bottom: 1px dashed rgba(246,200,95,.35);
+  }
+  .badge {
+    margin-left: auto; font: 800 .72rem 'Nunito', sans-serif; color: var(--night);
+    background: var(--gold); padding: 4px 11px; border-radius: 999px;
+  }
+  .day.today { border-color: var(--gold); animation: glow 3.2s ease-in-out infinite; }
+  @keyframes glow {
+    0%, 100% { box-shadow: 0 18px 40px rgba(0,0,0,.28), 0 0 0 rgba(246,200,95,0); }
+    50% { box-shadow: 0 18px 40px rgba(0,0,0,.28), 0 0 38px rgba(246,200,95,.45); }
+  }
+  .day ul { list-style: none; counter-reset: jam; }
+  .day li {
+    counter-increment: jam; display: flex; align-items: center; gap: 14px;
+    padding: 11px 0; font-weight: 700; letter-spacing: .02em;
+    border-bottom: 1px solid rgba(246,200,95,.12);
+  }
+  .day li:last-child { border-bottom: 0; }
+  .day li::before {
+    content: counter(jam); flex: none; width: 28px; height: 28px; display: grid; place-items: center;
+    font: 800 .78rem 'Nunito', sans-serif; color: var(--night);
+    background: var(--c, var(--amber)); border-radius: 0 100% 0 100%;
+  }
+  .day li small { font-weight: 400; opacity: .72; }
+
+  footer { position: relative; z-index: 2; text-align: center; padding: 0 20px 28px; margin-top: -42vh; font-size: .85rem; opacity: .75; }
+
+  /* ---------- Tombol musik & toast ---------- */
+  #musicBtn {
+    position: fixed; right: 16px; bottom: 16px; z-index: 40; width: 54px; height: 54px;
+    border-radius: 50%; border: 0; cursor: pointer; background: var(--gold);
+    display: flex; align-items: center; justify-content: center; gap: 3px;
+    box-shadow: 0 8px 22px rgba(0,0,0,.45);
+  }
+  #musicBtn i { display: block; width: 3.5px; height: 20px; border-radius: 3px; background: var(--night); transform: scaleY(.3); }
+  #toast {
+    position: fixed; left: 50%; bottom: 84px; z-index: 41; transform: translateX(-50%);
+    max-width: 88vw; padding: 12px 18px; border-radius: 14px; font-size: .88rem; text-align: center;
+    background: rgba(20,9,6,.92); border: 1px solid rgba(246,200,95,.4); opacity: 0; pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="sun" aria-hidden="true"></div>
+<div class="rays" id="rays" aria-hidden="true"></div>
+<div class="hills" id="hills" aria-hidden="true"></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+
+<div id="intro">
+  <div>
+    <div class="intro-school">SMPN 2 GREGED</div>
+    <h1 class="intro-title">Jadwal Pelajaran<br>Kelas IX-A</h1>
+    <p>Ketuk tombol di bawah untuk membuka jadwal dan memutar musik.</p>
+    <button id="startBtn">Buka jadwal</button>
+  </div>
+</div>
+
+<header>
+  <h1 class="school" id="schoolName">SMPN 2 GREGED</h1>
+  <p class="subtitle">Jadwal Pelajaran Kelas IX-A</p>
+  <p class="today-line" id="todayLine"></p>
+  <div class="line"></div>
+</header>
+
+<main id="schedule">
+  <section class="day" data-day="1"><h2>Senin</h2><ul>
+    <li>B.INDO</li><li>PAIBP</li><li>IPS</li></ul></section>
+  <section class="day" data-day="2"><h2>Selasa</h2><ul>
+    <li>B.SUNDA</li><li>B.INDO</li><li>MTK</li><li>INFORMATIKA</li></ul></section>
+  <section class="day" data-day="3"><h2>Rabu</h2><ul>
+    <li>B.INGGRIS</li><li>MTK</li><li>SBDP</li><li>PJOK <small>(mencatat)</small></li></ul></section>
+  <section class="day" data-day="4"><h2>Kamis</h2><ul>
+    <li>IPA</li><li>PP</li><li>MTK</li></ul></section>
+  <section class="day" data-day="5"><h2>Jum'at</h2><ul>
+    <li>IPA</li><li>IPS</li></ul></section>
+  <section class="day" data-day="6"><h2>Sabtu</h2><ul>
+    <li>B.INDO</li><li>PJOK <small>(Praktek)</small></li><li>B.INGGRIS</li></ul></section>
+</main>
+
+<footer>SMPN 2 GREGED &bull; Kelas IX-A</footer>
+
+<button id="musicBtn" aria-label="Putar atau jeda musik"><i></i><i></i><i></i><i></i></button>
+<div id="toast" role="status"></div>
+
+<!-- Taruh file lagu di folder yang sama dengan nama: autumn-niki.mp3 -->
+<audio id="bgm" src="autumn-niki.mp3" loop preload="auto"></audio>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const rand = (a, b) => a + Math.random() * (b - a);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+/* =========================================================
+   1. BUKIT & POHON (SVG dibuat otomatis, 3 lapis parallax)
+   ========================================================= */
+function seeded(seed) { return () => (seed = (seed * 16807) % 2147483647) / 2147483647; }
+
+function makeHillLayer(o) {
+  const r = seeded(o.seed);
+  const f = x => o.base + Math.sin(x / 230 + o.seed) * o.amp + Math.sin(x / 90 + o.seed * 2) * o.amp * .3;
+  let d = `M0 400 L0 ${f(0)}`;
+  for (let x = 40; x <= 1600; x += 40) d += ` L${x} ${f(x)}`;
+  d += ' L1600 400 Z';
+  let s = `<svg class="hill" viewBox="0 0 1600 400" preserveAspectRatio="xMidYMax slice" aria-hidden="true">`;
+  s += `<path d="${d}" fill="${o.hill}"/>`;
+  for (let i = 0; i < o.count; i++) {
+    const x = r() * 1600, y = f(x) + 6, h = o.tall * (.7 + r() * .6);
+    s += `<rect x="${x - 3.5}" y="${y - h * .5}" width="7" height="${h * .5}" fill="${o.trunk}"/>`;
+    [[0, .72, .34], [-.22, .55, .26], [.22, .55, .26], [0, .5, .22]].forEach(([dx, dy, rr]) => {
+      s += `<circle cx="${x + dx * h}" cy="${y - dy * h}" r="${rr * h}" fill="${pick(o.colors)}" fill-opacity="${o.op}"/>`;
+    });
+  }
+  return s + '</svg>';
+}
+$('#hills').innerHTML =
+  makeHillLayer({ seed: 7,  base: 215, amp: 26, count: 30, tall: 110, hill: '#4a2214', trunk: '#3a1a10', op: .75, colors: ['#8a4a26', '#a35e2a', '#7a3a22', '#b0782e'] }) +
+  makeHillLayer({ seed: 13, base: 285, amp: 30, count: 18, tall: 165, hill: '#2e140c', trunk: '#220f09', op: .9,  colors: ['#b3441f', '#c8661f', '#9a3a1a', '#d98a2c'] }) +
+  makeHillLayer({ seed: 29, base: 350, amp: 18, count: 7,  tall: 250, hill: '#150805', trunk: '#0e0503', op: 1,   colors: ['#2a110a', '#341509', '#3a1a0b'] });
+const hillEls = $$('.hill');
+
+/* Parallax mengikuti kursor / sentuhan */
+const hillX = hillEls.map((el, i) => gsap.quickTo(el, 'x', { duration: 1.2, ease: 'power3.out' }));
+const hillF = [10, 24, 46];
+
+/* =========================================================
+   2. SISTEM PARTIKEL (canvas)
+   ========================================================= */
+const cvs = $('#fx'), ctx = cvs.getContext('2d');
+let W = innerWidth, H = innerHeight, DPR = 1, T = 0;
+
+function resize() {
+  DPR = Math.min(devicePixelRatio || 1, 2);
+  W = innerWidth; H = innerHeight;
+  cvs.width = W * DPR; cvs.height = H * DPR;
+  cvs.style.width = W + 'px'; cvs.style.height = H + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+
+/* --- Sprite daun (digambar sekali, dipakai ulang) --- */
+function leafSprite(kind, c1, c2) {
+  const s = 64, c = document.createElement('canvas');
+  c.width = c.height = s * 2;
+  const g = c.getContext('2d');
+  g.translate(s, s);
+  const grad = g.createLinearGradient(0, -s * .9, 0, s * .9);
+  grad.addColorStop(0, c1); grad.addColorStop(1, c2);
+  g.fillStyle = grad; g.strokeStyle = 'rgba(55,18,6,.6)'; g.lineJoin = 'round'; g.lineWidth = 1.6;
+  g.beginPath();
+  if (kind === 0) {                       /* daun oval */
+    g.moveTo(0, -s * .9);
+    g.bezierCurveTo(s * .78, -s * .45, s * .62, s * .5, 0, s * .78);
+    g.bezierCurveTo(-s * .62, s * .5, -s * .78, -s * .45, 0, -s * .9);
+  } else {                                /* daun maple */
+    const pts = [[-160,.3],[-125,.42],[-100,.66],[-72,.4],[-48,.82],[-24,.42],[0,.98],[24,.42],[48,.82],[72,.4],[100,.66],[125,.42],[160,.3]];
+    pts.forEach(([d, r], i) => {
+      const a = d * Math.PI / 180, x = Math.sin(a) * r * s * .9, y = -Math.cos(a) * r * s * .9 + s * .1;
+      i ? g.lineTo(x, y) : g.moveTo(x, y);
+    });
+    g.closePath();
+  }
+  g.fill(); g.stroke();
+  g.strokeStyle = 'rgba(55,18,6,.38)'; g.lineWidth = 1.2; g.beginPath();
+  if (kind === 0) {
+    g.moveTo(0, -s * .85); g.lineTo(0, s * .85);
+    for (let i = -2; i <= 2; i++) if (i) { g.moveTo(0, i * s * .12); g.lineTo(s * .38, i * s * .12 - s * .22); g.moveTo(0, i * s * .12); g.lineTo(-s * .38, i * s * .12 - s * .22); }
+  } else {
+    [[-48,.8],[0,.95],[48,.8],[-100,.62],[100,.62]].forEach(([d, r]) => {
+      const a = d * Math.PI / 180; g.moveTo(0, s * .2); g.lineTo(Math.sin(a) * r * s * .8, -Math.cos(a) * r * s * .8 + s * .1);
+    });
+    g.moveTo(0, s * .2); g.lineTo(0, s * .78);
+  }
+  g.stroke();
+  return c;
+}
+function glowSprite(rgb) {
+  const s = 64, c = document.createElement('canvas'); c.width = c.height = s;
+  const g = c.getContext('2d'), gr = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+  gr.addColorStop(0, `rgba(${rgb},1)`); gr.addColorStop(.25, `rgba(${rgb},.5)`); gr.addColorStop(1, `rgba(${rgb},0)`);
+  g.fillStyle = gr; g.fillRect(0, 0, s, s); return c;
+}
+const palette = [['#e5502d','#8f1d12'],['#f3962f','#a8541a'],['#f8cc62','#c98a1e'],['#c63a20','#6e1710'],['#a6ae42','#5a6422'],['#dc7420','#8a3a12']];
+const sprites = [];
+palette.forEach(([a, b]) => { sprites.push(leafSprite(0, a, b)); sprites.push(leafSprite(1, a, b)); });
+const glowGold = glowSprite('255,196,96'), glowOrange = glowSprite('255,120,40');
+
+/* --- Keadaan --- */
+let leaves = [], embers = [], bursts = [], sparks = [];
+const wind = { x: .4, y: 0 };
+const mouse = { x: -999, y: -999, vx: 0, vy: 0 };
+let scrollShift = 0, lastScroll = scrollY;
+
+function newLeaf(initial) {
+  const z = rand(.45, 1.25), k = W < 600 ? .75 : 1;
+  return {
+    x: rand(-60, W + 60), y: initial ? rand(-H * .2, H) : rand(-140, -30), z,
+    size: rand(24, 46) * z * k, vy: rand(.55, 1.1) * z * 58,
+    rot: rand(0, 6.28), vr: rand(-1.4, 1.4), ph: rand(0, 6.28), fs: rand(1.2, 3), sw: rand(.6, 1.5), sprite: pick(sprites)
+  };
+}
+function newEmber(initial) {
+  const big = Math.random() < .14;
+  return {
+    x: rand(0, W), y: initial ? rand(0, H) : H + rand(10, 80),
+    r: big ? rand(36, 74) : rand(6, 18), a: big ? rand(.1, .22) : rand(.35, .9),
+    vy: -rand(14, 46), ph: rand(0, 6.28), fl: rand(2, 5), sprite: Math.random() < .65 ? glowGold : glowOrange
+  };
+}
+function initParticles() {
+  resize();
+  const nL = Math.round(Math.min(60, Math.max(18, W * H / 22000)));
+  const nE = Math.round(Math.min(44, Math.max(14, W * H / 30000)));
+  leaves = Array.from({ length: nL }, () => newLeaf(true)).sort((a, b) => a.z - b.z);
+  embers = Array.from({ length: nE }, () => newEmber(true));
+}
+
+/* --- Ledakan daun saat klik/ketuk --- */
+function burst(x, y, n = 22) {
+  for (let i = 0; i < n; i++) {
+    const a = rand(0, 6.28), sp = rand(140, 460);
+    bursts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 140, size: rand(18, 36),
+      rot: rand(0, 6.28), vr: rand(-7, 7), ph: rand(0, 6.28), fs: rand(4, 8), sprite: pick(sprites), life: 0, max: rand(1.8, 3) });
+  }
+  for (let i = 0; i < 16; i++) {
+    const a = rand(0, 6.28), sp = rand(40, 220);
+    sparks.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: rand(10, 24), life: 0, max: rand(.7, 1.4), g: pick([glowGold, glowOrange]) });
+  }
+  if (bursts.length > 220) bursts.splice(0, bursts.length - 220);
+  if (sparks.length > 160) sparks.splice(0, sparks.length - 160);
+}
+
+/* --- Angin yang berembus bergantian --- */
+function gustLoop() {
+  gsap.to(wind, { x: rand(-.5, 1.5), duration: rand(3, 6), ease: 'sine.inOut', onComplete: gustLoop });
+}
+function bigGust() {
+  gsap.killTweensOf(wind);
+  gsap.timeline({ onComplete: gustLoop })
+    .to(wind, { x: 9, duration: 1.4, ease: 'power2.out' })
+    .to(wind, { x: .5, duration: 4, ease: 'power2.inOut' });
+}
+
+/* --- Gambar daun --- */
+function drawLeaf(l, alpha) {
+  const sx = .22 + .78 * Math.abs(Math.cos(T * l.fs + l.ph));
+  ctx.save();
+  ctx.translate(l.x, l.y); ctx.rotate(l.rot); ctx.scale(sx, 1);
+  ctx.globalAlpha = alpha * (.6 + .4 * sx);
+  ctx.drawImage(l.sprite, -l.size / 2, -l.size / 2, l.size, l.size);
+  ctx.restore();
+}
+
+/* --- Loop utama --- */
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now; T += dt;
+  ctx.clearRect(0, 0, W, H);
+
+  mouse.vx *= .9; mouse.vy *= .9;
+  const shift = scrollShift; scrollShift = 0;
+  const R = Math.max(90, Math.min(150, W * .14));
+
+  /* Bara api & bokeh (cahaya aditif) */
+  ctx.globalCompositeOperation = 'lighter';
+  for (const e of embers) {
+    e.x += (wind.x * 16 + Math.sin(T * .8 + e.ph) * 14) * dt;
+    e.y += e.vy * dt - shift * .25;
+    if (e.y < -80) { Object.assign(e, newEmber(false)); }
+    if (e.x > W + 80) e.x = -60; else if (e.x < -80) e.x = W + 60;
+    const fade = Math.min(1, e.y / (H * .35));
+    ctx.globalAlpha = e.a * (.6 + .4 * Math.sin(T * e.fl + e.ph)) * Math.max(0, fade);
+    ctx.drawImage(e.sprite, e.x - e.r, e.y - e.r, e.r * 2, e.r * 2);
+  }
+  ctx.globalCompositeOperation = 'source-over';
+
+  /* Daun yang selalu jatuh */
+  for (const l of leaves) {
+    const sway = Math.sin(T * l.sw + l.ph);
+    l.x += (wind.x * 62 * l.z + sway * 38 * l.z) * dt;
+    l.y += (l.vy + wind.y * 40 + Math.cos(T * l.sw * .7 + l.ph) * 9) * dt - shift * l.z * .45;
+    l.rot += (l.vr + wind.x * .45) * dt;
+
+    const dx = l.x - mouse.x, dy = l.y - mouse.y, d = Math.hypot(dx, dy);
+    if (d < R && d > .1) {
+      const f = (1 - d / R) ** 2;
+      l.x += (dx / d) * f * 300 * dt + mouse.vx * f * .5 * dt;
+      l.y += (dy / d) * f * 300 * dt + mouse.vy * f * .5 * dt;
+      l.rot += f * 6 * dt * (dx > 0 ? 1 : -1);
+    }
+    if (l.y > H + 80 || l.y < -260) { const n = newLeaf(false); Object.assign(l, n); if (shift < 0) l.y = -60; }
+    if (l.x > W + 80) l.x = -60; else if (l.x < -80) l.x = W + 60;
+    drawLeaf(l, .4 + .55 * Math.min(1, l.z / 1.1));
+  }
+
+  /* Ledakan daun */
+  for (let i = bursts.length - 1; i >= 0; i--) {
+    const b = bursts[i];
+    b.life += dt;
+    if (b.life >= b.max) { bursts.splice(i, 1); continue; }
+    b.vx *= 1 - 1.8 * dt; b.vy = b.vy * (1 - 1.1 * dt) + 240 * dt;
+    b.x += (b.vx + wind.x * 30) * dt; b.y += b.vy * dt; b.rot += b.vr * dt;
+    b.fs = b.fs;
+    drawLeaf({ ...b, x: b.x, y: b.y }, Math.min(1, (1 - b.life / b.max) * 2.2));
+  }
+
+  /* Percikan di belakang kursor & ledakan */
+  ctx.globalCompositeOperation = 'lighter';
+  for (let i = sparks.length - 1; i >= 0; i--) {
+    const p = sparks[i];
+    p.life += dt;
+    if (p.life >= p.max) { sparks.splice(i, 1); continue; }
+    p.vx *= 1 - 2 * dt; p.vy = p.vy * (1 - 2 * dt) - 14 * dt;
+    p.x += p.vx * dt; p.y += p.vy * dt;
+    ctx.globalAlpha = (1 - p.life / p.max) * .9;
+    ctx.drawImage(p.g, p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
+  }
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(frame);
+}
+
+/* --- Input --- */
+let lastTrail = { x: 0, y: 0 };
+addEventListener('pointermove', e => {
+  mouse.vx = (e.clientX - mouse.x) * 14; mouse.vy = (e.clientY - mouse.y) * 14;
+  if (mouse.x < -900) { mouse.vx = mouse.vy = 0; }
+  mouse.x = e.clientX; mouse.y = e.clientY;
+  if (Math.hypot(e.clientX - lastTrail.x, e.clientY - lastTrail.y) > 16 && !reduce) {
+    lastTrail = { x: e.clientX, y: e.clientY };
+    sparks.push({ x: e.clientX, y: e.clientY, vx: rand(-20, 20), vy: rand(-30, 0), r: rand(8, 16), life: 0, max: rand(.6, 1.1), g: pick([glowGold, glowOrange]) });
+  }
+  const nx = e.clientX / W - .5;
+  hillX.forEach((to, i) => to(-nx * hillF[i]));
+});
+addEventListener('pointerleave', () => { mouse.x = mouse.y = -999; });
+addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') mouse.x = mouse.y = -999; });
+addEventListener('pointerdown', e => { if (!reduce) burst(e.clientX, e.clientY); });
+addEventListener('scroll', () => { scrollShift += scrollY - lastScroll; lastScroll = scrollY; }, { passive: true });
+addEventListener('resize', () => { resize(); if (!leaves.length) initParticles(); });
+
+/* =========================================================
+   3. KONTEN: nama sekolah per huruf, hari ini, kartu 3D
+   ========================================================= */
+const school = $('#schoolName');
+school.setAttribute('aria-label', school.textContent);
+school.innerHTML = [...school.textContent].map(c => c === ' ' ? ' ' : `<span class="ch" aria-hidden="true">${c}</span>`).join('');
+
+const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu'];
+const dow = new Date().getDay();
+const todayCard = $(`.day[data-day="${dow}"]`);
+if (todayCard) {
+  todayCard.classList.add('today');
+  todayCard.querySelector('h2').insertAdjacentHTML('beforeend', '<span class="badge">Hari ini</span>');
+  $('#todayLine').textContent = `Hari ini hari ${hari[dow]}, ${todayCard.querySelectorAll('li').length} mata pelajaran.`;
+} else {
+  $('#todayLine').textContent = `Hari ini hari ${hari[dow]}, libur.`;
+}
+
+/* Kartu miring 3D mengikuti kursor */
+$$('.day').forEach(card => {
+  const rx = gsap.quickTo(card, 'rotationX', { duration: .6, ease: 'power3.out' });
+  const ry = gsap.quickTo(card, 'rotationY', { duration: .6, ease: 'power3.out' });
+  card.addEventListener('pointermove', e => {
+    if (e.pointerType !== 'mouse') return;
+    const b = card.getBoundingClientRect(), px = (e.clientX - b.left) / b.width, py = (e.clientY - b.top) / b.height;
+    ry((px - .5) * 14); rx(-(py - .5) * 14);
+    card.style.setProperty('--mx', px * 100 + '%'); card.style.setProperty('--my', py * 100 + '%');
+  });
+  card.addEventListener('pointerleave', () => { rx(0); ry(0); });
+});
+
+/* =========================================================
+   4. MUSIK
+   ========================================================= */
+const bgm = $('#bgm'), musicBtn = $('#musicBtn'), bars = $$('#musicBtn i');
+bgm.volume = 0;
+let eq = [];
+function eqOn() {
+  eqOff();
+  eq = bars.map(b => gsap.to(b, { scaleY: () => rand(.35, 1), duration: () => rand(.25, .5), repeat: -1, yoyo: true, ease: 'sine.inOut', repeatRefresh: true }));
+}
+function eqOff() { eq.forEach(t => t.kill()); eq = []; gsap.to(bars, { scaleY: .3, duration: .4 }); }
+
+function toast(msg) {
+  gsap.killTweensOf('#toast');
+  gsap.fromTo('#toast', { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: .5 });
+  gsap.to('#toast', { opacity: 0, delay: 5, duration: .6 });
+  $('#toast').textContent = msg;
+}
+function startMusic() {
+  bgm.play().then(() => {
+    gsap.to(bgm, { volume: .6, duration: 3, ease: 'power1.inOut' });
+    eqOn();
+  }).catch(() => toast('Lagu belum bisa diputar. Pastikan file autumn-niki.mp3 ada di folder yang sama.'));
+}
+musicBtn.addEventListener('click', () => {
+  if (bgm.paused) startMusic();
+  else { gsap.to(bgm, { volume: 0, duration: 1, onComplete: () => bgm.pause() }); eqOff(); }
+});
+
+/* =========================================================
+   5. ANIMASI PEMBUKA (GSAP timeline)
+   ========================================================= */
+gsap.set('.school .ch', { opacity: 0, y: -80, rotation: () => rand(-35, 35), filter: 'blur(12px)' });
+gsap.set(['.subtitle', '.today-line'], { opacity: 0, y: 18 });
+gsap.set('.line', { scaleX: 0 });
+gsap.set('.day', { opacity: 0, y: 90, rotationX: -24, scale: .93, transformPerspective: 900, transformOrigin: '50% 0%' });
+gsap.set('.day li', { opacity: 0, x: -18 });
+gsap.set('#musicBtn', { opacity: 0, scale: .6 });
+gsap.set('.hill', { yPercent: 28 });
+gsap.set('#rays', { xPercent: -50, yPercent: -50 });
+
+/* Sinar matahari & cahaya yang berdenyut pelan */
+gsap.to('#rays', { rotation: 360, duration: 220, ease: 'none', repeat: -1 });
+gsap.to('.sun', { opacity: .72, duration: 4.5, ease: 'sine.inOut', yoyo: true, repeat: -1 });
+gsap.to('#rays', { opacity: .55, duration: 6, ease: 'sine.inOut', yoyo: true, repeat: -1 });
+
+function revealCards() {
+  ScrollTrigger.batch('.day', {
+    start: 'top 92%', once: true,
+    onEnter: batch => {
+      gsap.to(batch, { opacity: 1, y: 0, rotationX: 0, scale: 1, duration: 1.4, stagger: .2, ease: 'power3.out' });
+      gsap.to(batch.flatMap(c => [...c.querySelectorAll('li')]),
+        { opacity: 1, x: 0, duration: .8, stagger: .09, delay: .55, ease: 'power2.out' });
+    }
+  });
+}
+
+function showStatic() {
+  $('#intro').remove();
+  gsap.set(['.school .ch', '.subtitle', '.today-line', '.day', '.day li', '#musicBtn'],
+    { opacity: 1, x: 0, y: 0, rotation: 0, rotationX: 0, scale: 1, filter: 'none' });
+  gsap.set('.line', { scaleX: 1 }); gsap.set('.hill', { yPercent: 0 });
+}
+
+$('#startBtn').addEventListener('click', () => {
+  $('#startBtn').disabled = true;
+  startMusic();
+  if (reduce) { showStatic(); return; }
+  bigGust();
+  gsap.timeline()
+    .to('#intro', { opacity: 0, duration: 1.5, ease: 'power2.inOut', onComplete: () => $('#intro').remove() })
+    .to('.hill', { yPercent: 0, duration: 2.6, stagger: .2, ease: 'power3.out' }, .2)
+    .to('.school .ch', { y: 0, rotation: 0, opacity: 1, filter: 'blur(0px)', duration: 1.5, stagger: .07, ease: 'back.out(1.5)' }, .8)
+    .to(['.subtitle', '.today-line'], { opacity: 1, y: 0, duration: 1.1, stagger: .25, ease: 'power2.out' }, '-=1')
+    .to('.line', { scaleX: 1, duration: 1.4, ease: 'power2.inOut' }, '<')
+    .to('#musicBtn', { opacity: 1, scale: 1, duration: .9, ease: 'back.out(2)' }, '-=.6')
+    .add(revealCards, '-=.6');
+});
+
+/* Mulai partikel segera, agar layar pembuka sudah hidup */
+if (!reduce) { initParticles(); gustLoop(); requestAnimationFrame(frame); }
+else { resize(); }
+</script>
+</body>
+</html>
